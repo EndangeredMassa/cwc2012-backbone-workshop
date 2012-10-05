@@ -14,8 +14,19 @@ create post steps
 - - click logout
 - - click post button
 - - - give them the postId code because it's weird
+  // We need a unique id for saving this as well as
+  // referencing it when we save comments for a post
+  getNewPostId: function(){
+    if(!this.newPostId) {
+      this.newPostId = this.collection.length;
+    }
+    this.newPostId++;
+    return this.newPostId;
+  },
 - - - create post model
 - - - create post collection (give localstorage code)
+  model: PostModel,
+  localStorage: new Store('PostCollection')
 - - - add to collection and save (in that order)
 - - - clear input
 
@@ -60,6 +71,12 @@ create comment
 
 - comment collection
 - - localstorage setup on init (give code)
+  initialize: function(options){
+    // set the localStorage Store on init because we need
+    // the key to reference a specific post id
+    var key = 'CommentsForPost:' + options.postId;
+    this.localStorage = new Store(key);
+  }
 
 render comments
 - commentview
