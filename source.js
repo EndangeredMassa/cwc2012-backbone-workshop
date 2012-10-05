@@ -44,7 +44,24 @@ var Router = Backbone.Router.extend({
       return;
     }
 
-    $('#container').html('<h1>Hello World!</h1>');
+    var posts = new PostCollection();
+    posts.fetch()
+
+    var statusView = new CreateStatusView({
+      collection: posts
+    });
+    statusView.render();
+
+    var postsView = new PostCollectionView({
+      collection: posts
+    });
+    postsView.render();
+
+    $('#container').children().remove();
+    $('#container')
+      .append(statusView.el)
+      .append('<hr>')
+      .append(postsView.el);
   }
 });
 
@@ -70,18 +87,96 @@ var UserModel = Backbone.Model.extend({
 });
 
 var CreateStatusView = Backbone.View.extend({
+  className: 'status',
+  template: '<button class="btn logout pull-right">logout</button>'
+    + '<form class="form-inline"><span class="username">{{ username }}</span>: '
+    + '<div class="input-append"><input type="text" placeholder="How is your planet doing?" />'
+    + '<button class="btn btn-primary create-status">Post</button></div></form>',
+
+  events: {
+    'click .create-status': 'createStatus',
+    'click .logout': 'logout'
+  },
+  render: function(){
+    var context = {
+      username: window.user.get('name')
+    };
+    this.$el.html(Mustache.render(this.template, context));
+  },
+
+  // We need a unique id for saving this as well as
+  // referencing it when we save comments for a post
+  getNewPostId: function(){
+    if(!this.newPostId) {
+      this.newPostId = this.collection.length;
+    }
+    this.newPostId++;
+    return this.newPostId;
+  },
+  createStatus: function(){
+    var text = this.$('input').val();
+    var post = new PostModel({
+      id: this.getNewPostId(),
+      text: text,
+      username: window.user.get('name')
+    });
+
+    this.collection.add(post);
+
+    // saving a model in a localStorage collection causes
+    // it to be stored in localStorage
+    post.save();
+
+    this.$('input').val('');
+  },
+  logout: function(){
+    window.user.set('name', null);
+    window.navigate('/signup');
+  }
 });
 
 var PostModel = Backbone.Model.extend({
 });
 
 var PostCollection = Backbone.Collection.extend({
+  model: PostModel,
+  localStorage: new Store('PostCollection')
 });
 
 var PostView = Backbone.View.extend({
+  className: 'post',
+  template: '<div class="post-text"><span class="username">{{ username }}</span>: {{ text }}</div>',
+  renderView: function(view){
+    view.render();
+    this.$el.append(view.el);
+  },
+  render: function(){
+    this.$el.html(Mustache.render(this.template, this.model.attributes));
+  }
 });
 
 var PostCollectionView = Backbone.View.extend({
+  className: 'posts',
+  initialize: function(){
+    this.collection.bind('add', this.postAdded, this);
+  },
+  postAdded: function(model){
+    var postView = new PostView({
+      model: model
+    });
+    this.renderView(postView);
+  },
+  renderView: function(view){
+    view.render()
+    this.$el.prepend(view.el)
+  },
+  render: function(){
+    var view = this;
+    this.collection.each(function(post){
+      var postView = new PostView({model: post});
+      view.renderView(postView);
+    });
+  }
 });
 
 var CreateCommentView = Backbone.View.extend({
@@ -95,3 +190,4 @@ var CommentView = Backbone.View.extend({
 
 var CommentCollectionView = Backbone.View.extend({
 });
+
