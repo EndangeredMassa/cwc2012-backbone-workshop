@@ -136,8 +136,12 @@ var CreateStatusView = Backbone.View.extend({
 });
 
 var PostModel = Backbone.Model.extend({
-  defaults: {
-    'likes': []
+  initialize: function(){
+    // can't use model#defaults here because it will use the same
+    // reference for all new post models
+    if (this.get('likes') == null) {
+      this.set('likes', []);
+    }
   },
   addLike: function(username){
     if(_.contains(this.get('likes'), username))
