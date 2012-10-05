@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!--
+  <link href="http://fonts.googleapis.com/css?family=Open+Sans:regular,semibold,italic,italicsemibold|PT+Sans:400,700,400italic,700italic|PT+Serif:400,700,400italic,700italic" rel="stylesheet" />
+  -->
+  <link rel='stylesheet' href='styles.css'>
+</head>
+<body>
+  <div id="impress">
+    <div class="step slide" data-x="0" data-y="0">
+      <q>CWC2012 Backbone Workshop</q>
+      <p>Sean Massa and Geoff Massanek</p>
+    </div>
+
+    <div class="step slide" data-x="1500" data-y="0">
+      <h1>Views</h1>
+      <hr>
+<pre>
+var ProductView = Backbone.View.extend({
+  tagName: 'div',
+  className: 'product',
+  template: '{{ name }}: {{ description }}',
+  render: function(){
+    var html = Mustache.render(
+      this.template,
+      this.model.attributes
+    );
+    this.$el.html(html);
+  }
+});
+</pre>
+    </div>
+
+
+    <div class="step slide" data-x="3000" data-y="0">
+      <h1>View Events</h1>
+      <hr>
+<pre>
+var ProductView = Backbone.View.extend({
+  initialize: function(){
+    this.model.on('change', this.render, this);
+    this.messageBus.on('clear:all', this.remove, this);
+  },
+  events: {
+    'click .add': 'addProduct'
+  },
+  addProduct: function(){
+    this.trigger('add', this);
+  }
+});
+</pre>
+    </div>
+
+
+    <div class="step slide" data-x="4500" data-y="0">
+      <h1>View Events</h1>
+      <hr>
+<pre>
+var CheckoutView = Backbone.View.extend({
+  addProduct: function(product){
+    this.collection.add(product);
+  },
+  render: function(){
+    var productView = new ProductView();
+    productView.render();
+    productView.on('add', this.addProduct, this)
+    this.$el.append(productView.el);
+  }
+});
+</pre>
+    </div>
+
+
+    <div class="step slide" data-x="6000" data-y="0">
+      <h1>Models</h1>
+      <hr>
+<pre>
+var model = new Backbone.Model();
+model.set('name', 'Some Guy');
+model.get('name');
+model.attributes;
+model.on('change', function(){}, this);
+
+var ProductModel = Backbone.Model.extend({
+  url: '/product',
+  // OR
+  localStorage: new Store('ProductModel')
+});
+
+var productModel = new ProductModel();
+productModel.fetch();
+productModel.save();
+</pre>
+    </div>
+
+
+    <div class="step slide" data-x="7500" data-y="0">
+      <h1>Collections</h1>
+      <hr>
+<pre>
+var collection = new Backbone.Collection();
+collection.add(someModel);
+collection.remove(someModel);
+collection.reset([model1, model2]);
+collection.models;
+collection.each(function(model){});
+
+var ProductCollection = Backbone.Collection.extend({
+  url: '/products',
+  // OR
+  localStorage: new Store('Products');
+});
+
+var products = new ProductCollection();
+products.fetch();
+products.sync();
+</pre>
+    </div>
+
+
+    <div class="step slide" data-x="7500" data-y="0">
+      <h1>Routers</h1>
+      <hr>
+<pre>
+var Router = Backbone.Router.extend({
+  routes: {
+    '': 'index',
+    '/products': 'productIndex'
+  },
+  index: function(){
+    window.router.navigate('/products', true);
+  },
+  productIndex: function(){
+    var productsView = new ProductCollectionView();
+    productView.render();
+    $('#container').append(productView.el);
+  }
+});
+window.router = new Router;
+Backbone.history.start({pushState: true});
+</pre>
+    </div>
+
+
+    <div class="step slide" data-x="9000" data-y="0">
+      <h1>Resources</h1>
+      <hr>
+      <ul>
+        <li>backbonejs.org</li>
+        <li>Jeremy Ashkenas / @jashkenas</li>
+        <li>smassa@groupon.com / @endangeredmassa</li>
+        <li>geoff@groupon.com / @gmassanek</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- This has to be loaded last  -->
+  <script src="impress.js"></script>
+  <script>
+    window.onload = function(){
+      impress().init();
+    };
+  </script>
+</body>
+</html>
