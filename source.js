@@ -180,6 +180,21 @@ var PostView = Backbone.View.extend({
     var context = this.model.attributes;
     context.likeCount = this.model.get('likes').length;
     this.$el.html(Mustache.render(this.template, context));
+
+    var comments = new CommentCollection({
+      postId: this.model.get('id')
+    });
+    comments.fetch();
+
+    var commentsView = new CommentCollectionView({
+      collection: comments
+    });
+    this.renderView(commentsView);
+
+    var createCommentView = new CreateCommentView({
+      collection: comments
+    });
+    this.renderView(createCommentView);
   }
 });
 
@@ -208,14 +223,64 @@ var PostCollectionView = Backbone.View.extend({
 });
 
 var CreateCommentView = Backbone.View.extend({
+  className: 'create-comment',
+  template: '<form class="form-inline input-append"><input type="text" placeholder="add comment" /><button class="btn btn-primary add-comment">Comment</button></form>',
+  events: {
+    'click .add-comment': 'addComment'
+  },
+  addComment: function(){
+    var text = this.$('input').val();
+    var comment = new Backbone.Model({
+      username: window.user.get('name'),
+      text: text
+    });
+
+    this.collection.add(comment);
+    comment.save();
+
+    this.$('input').val('');
+  },
+  render: function(){
+    this.$el.html(this.template);
+  }
 });
 
 var CommentCollection = Backbone.Collection.extend({
+  initialize: function(options){
+    // set the localStorage Store on init because we need
+    // the key to reference a specific post id
+    var key = 'CommentsForPost:' + options.postId;
+    this.localStorage = new Store(key);
+  }
 });
 
 var CommentView = Backbone.View.extend({
+  className: 'comment',
+  template: '<span class="username">{{ username }}: </span><span class="comment-text">{{ text }}</span>',
+  render: function(){
+    this.$el.html(Mustache.render(this.template, this.model.attributes));
+  }
 });
 
 var CommentCollectionView = Backbone.View.extend({
+  className: 'comments',
+  initialize: function(){
+    this.collection.bind('add', this.addComment, this);
+  },
+  addComment: function(comment){
+    var commentView = new CommentView({model: comment});
+    this.renderView(commentView);
+  },
+  renderView: function(view){
+    view.render();
+    this.$el.append(view.el);
+  },
+  render: function(){
+    var view = this;
+    this.collection.each(function(comment){
+      var commentView = new CommentView({model: comment});
+      view.renderView(commentView);
+    });
+  }
 });
 
