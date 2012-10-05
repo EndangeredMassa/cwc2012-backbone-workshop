@@ -136,6 +136,20 @@ var CreateStatusView = Backbone.View.extend({
 });
 
 var PostModel = Backbone.Model.extend({
+  defaults: {
+    'likes': []
+  },
+  addLike: function(username){
+    if(_.contains(this.get('likes'), username))
+      return;
+
+    this.get('likes').push(username);
+    this.save();
+
+    // because we're not modifying an attribute directly with
+    // this.set, we have to manally trigger the change event
+    this.trigger('change');
+  }
 });
 
 var PostCollection = Backbone.Collection.extend({
@@ -145,13 +159,27 @@ var PostCollection = Backbone.Collection.extend({
 
 var PostView = Backbone.View.extend({
   className: 'post',
-  template: '<div class="post-text"><span class="username">{{ username }}</span>: {{ text }}</div>',
+  template: '<div class="post-text"><span class="username">{{ username }}</span>: {{ text }}</div>'
+    + '<button class="btn btn-link pull-right like">Like It!</button>'
+    + '<div class="likes">Likes: {{ likeCount }}</div>'
+  ,
+  events: {
+    'click .like': 'addLike'
+  },
+  initialize: function(){
+    this.model.bind('change', this.render, this);
+  },
+  addLike: function(){
+    this.model.addLike(window.user.get('name'));
+  },
   renderView: function(view){
     view.render();
     this.$el.append(view.el);
   },
   render: function(){
-    this.$el.html(Mustache.render(this.template, this.model.attributes));
+    var context = this.model.attributes;
+    context.likeCount = this.model.get('likes').length;
+    this.$el.html(Mustache.render(this.template, context));
   }
 });
 
